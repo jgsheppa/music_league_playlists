@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -205,6 +206,36 @@ const (
 	tokenURL   = "https://accounts.spotify.com/api/token"
 )
 
+type PlaylistsByLeague = map[string][]SpotifyPlaylist
+
+func (p *Playlist) GetPlaylistsForMulitpleLeagues() ([]SpotifyPlaylist, error) {
+	var fullList []SpotifyPlaylist
+
+	files, err := content.ReadDir("assets")
+	if err != nil {
+		return []SpotifyPlaylist{}, err
+	}
+
+	var wg sync.WaitGroup
+	for _, file := range files {
+		fmt.Printf("fetching playlists for file: %s \n", file.Name())
+		wg.Add(1)
+		var playlists []SpotifyPlaylist
+
+		go func() {
+			defer wg.Done()
+			playlists, err = p.GetPlaylists(fmt.Sprintf("assets/%s", file.Name()))
+		}()
+		wg.Wait()
+		if err != nil {
+			return []SpotifyPlaylist{}, err
+		}
+		fullList = append(fullList, playlists...)
+	}
+	fmt.Println("successfully fetched all playlists")
+	return fullList, nil
+}
+
 func (p *Playlist) GetPlaylists(filepath string) ([]SpotifyPlaylist, error) {
 	file, err := content.ReadFile(filepath)
 	if err != nil {
@@ -216,9 +247,17 @@ func (p *Playlist) GetPlaylists(filepath string) ([]SpotifyPlaylist, error) {
 		return []SpotifyPlaylist{}, err
 	}
 
+	var wg sync.WaitGroup
 	var playlists []SpotifyPlaylist
 	for _, id := range ids {
-		playlist, err := p.getPlaylist(id)
+		wg.Add(1)
+		var playlist SpotifyPlaylist
+
+		go func() {
+			defer wg.Done()
+			playlist, err = p.getPlaylist(id)
+		}()
+		wg.Wait()
 		if err != nil {
 			return []SpotifyPlaylist{}, err
 		}

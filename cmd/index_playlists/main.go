@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -31,9 +32,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not initialize playlist: %e", err)
 	}
-	playlist, err := newPlaylist.GetPlaylists("assets/electricBoogaloo.json")
+
+	playlists, err := newPlaylist.GetPlaylistsForMulitpleLeagues()
 	if err != nil {
 		log.Fatalf("could not get playlists: %e", err)
 	}
-	fmt.Println(playlist)
+
+	jsonBytes, err := json.Marshal(playlists)
+	if err != nil {
+		log.Fatalf("could not marshal playlists into json: %e", err)
+	}
+
+	err = os.WriteFile("playlists.json", jsonBytes, 0644)
+	if err != nil {
+		log.Fatalf("could not create playlists.json: %e", err)
+	}
 }
