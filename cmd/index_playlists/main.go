@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -25,26 +24,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	fmt.Printf("successfully connected to elastic node at the following url: %s \n", esURL)
 
-	newPlaylist, err := playlists.NewPlaylist()
-	if err != nil {
-		log.Fatalf("could not initialize playlist: %e", err)
-	}
-
-	playlists, err := newPlaylist.GetPlaylistsForMulitpleLeagues()
-	if err != nil {
-		log.Fatalf("could not get playlists: %e", err)
-	}
-
-	jsonBytes, err := json.Marshal(playlists)
-	if err != nil {
-		log.Fatalf("could not marshal playlists into json: %e", err)
-	}
-
-	err = os.WriteFile("playlists.json", jsonBytes, 0644)
-	if err != nil {
-		log.Fatalf("could not create playlists.json: %e", err)
+	if err := playlists.Run(); err != nil {
+		log.Fatalf("could not run playlist script to completion: %e", err)
 	}
 }

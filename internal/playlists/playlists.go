@@ -1,8 +1,8 @@
 package playlists
 
 import (
-	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,9 +10,6 @@ import (
 	"sync"
 	"time"
 )
-
-//go:embed assets/*
-var content embed.FS
 
 type MusicLeaguePlaylist struct {
 	ID                  string    `json:"id,omitempty"`
@@ -208,36 +205,47 @@ const (
 
 type PlaylistsByLeague = map[string][]SpotifyPlaylist
 
-func (p *Playlist) GetPlaylistsForMulitpleLeagues() ([]SpotifyPlaylist, error) {
-	var fullList []SpotifyPlaylist
-
-	files, err := content.ReadDir("assets")
+func MergeLeagueData(directory, filename string) error {
+	files, err := os.ReadDir(directory)
 	if err != nil {
-		return []SpotifyPlaylist{}, err
+		return err
 	}
 
-	var wg sync.WaitGroup
+	var mergedList MusicLeaguePlaylists
 	for _, file := range files {
-		fmt.Printf("fetching playlists for file: %s \n", file.Name())
-		wg.Add(1)
-		var playlists []SpotifyPlaylist
-
-		go func() {
-			defer wg.Done()
-			playlists, err = p.GetPlaylists(fmt.Sprintf("assets/%s", file.Name()))
-		}()
-		wg.Wait()
+		data, err := os.ReadFile(fmt.Sprintf("%s/%s", directory, file.Name()))
 		if err != nil {
-			return []SpotifyPlaylist{}, err
+			return err
 		}
-		fullList = append(fullList, playlists...)
+		var list MusicLeaguePlaylists
+		if err := json.Unmarshal(data, &list); err != nil {
+			return err
+		}
+		mergedList = append(mergedList, list...)
 	}
-	fmt.Println("successfully fetched all playlists")
-	return fullList, nil
+
+	jsonBytes, err := json.Marshal(mergedList)
+	if err != nil {
+		return err
+	}
+
+	filePath := fmt.Sprintf("%s/%s", directory, filename)
+
+	if _, err := os.Stat(filePath); !errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	err = os.WriteFile(filePath, jsonBytes, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *Playlist) GetPlaylists(filepath string) ([]SpotifyPlaylist, error) {
-	file, err := content.ReadFile(filepath)
+	start := time.Now()
+	file, err := os.ReadFile(filepath)
 	if err != nil {
 		return []SpotifyPlaylist{}, err
 	}
@@ -247,25 +255,41 @@ func (p *Playlist) GetPlaylists(filepath string) ([]SpotifyPlaylist, error) {
 		return []SpotifyPlaylist{}, err
 	}
 
+	res := NewWorker()
+	jobs := make(chan string, len(ids))
+	results := make(chan []SpotifyPlaylist, len(ids))
 	var wg sync.WaitGroup
-	var playlists []SpotifyPlaylist
+
+	numWorkers := 20
+	for w := 0; w < numWorkers; w++ {
+		go res.worker(p.getSpotifyPlaylist, jobs, results, &wg)
+	}
+	wg.Add(len(ids))
+
 	for _, id := range ids {
-		wg.Add(1)
-		var playlist SpotifyPlaylist
-
-		go func() {
-			defer wg.Done()
-			playlist, err = p.getPlaylist(id)
-		}()
-		wg.Wait()
-		if err != nil {
-			return []SpotifyPlaylist{}, err
-		}
-
-		playlists = append(playlists, playlist)
+		jobs <- id
 	}
 
-	return playlists, nil
+	close(jobs)
+	wg.Wait()
+
+	finish := time.Since(start).Seconds()
+	fmt.Println("successfully fetched all playlists")
+	fmt.Printf("finish in %f seconds \n", finish)
+	return res.playlists, nil
+}
+
+func (p *Playlist) CreatePlaylistJSON(playlists []SpotifyPlaylist) error {
+	jsonBytes, err := json.Marshal(playlists)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("playlists.json", jsonBytes, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type Playlist struct {
@@ -287,32 +311,8 @@ func NewPlaylist() (*Playlist, error) {
 	return &Playlist{token}, nil
 }
 
-func getToken() (Token, error) {
-	var token Token
-
-	clientSecret := os.Getenv("SPOTIFY_SECRET")
-	clientId := os.Getenv("SPOTIFY_CLIENT")
-
-	data := strings.NewReader(fmt.Sprintf("grant_type=client_credentials&client_id=%s&client_secret=%s", clientId, clientSecret))
-
-	req, err := http.NewRequest("POST", tokenURL, data)
-	if err != nil {
-		return Token{}, err
-	}
-	client := &http.Client{}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	resp, err := client.Do(req)
-	if err != nil {
-		return Token{}, err
-	}
-	defer resp.Body.Close()
-
-	json.NewDecoder(resp.Body).Decode(&token)
-
-	return token, nil
-}
-
-func (p *Playlist) getPlaylist(id string) (SpotifyPlaylist, error) {
+func (p *Playlist) getSpotifyPlaylist(id string) (SpotifyPlaylist, error) {
+	fmt.Printf("fetching spotify playlist with id %s \n", id)
 	var playlist SpotifyPlaylist
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", SpotifyURL, id), &strings.Reader{})
 	if err != nil {
@@ -328,5 +328,33 @@ func (p *Playlist) getPlaylist(id string) (SpotifyPlaylist, error) {
 
 	json.NewDecoder(resp.Body).Decode(&playlist)
 
+	fmt.Printf("finished fetching spotify playlist with id %s \n", id)
 	return playlist, nil
+}
+
+type Result struct {
+	playlists []SpotifyPlaylist
+	err       error
+}
+
+func NewWorker() *Result {
+	return &Result{}
+}
+
+func (r *Result) worker(requester func(id string) (SpotifyPlaylist, error), jobs <-chan string, results chan<- []SpotifyPlaylist, wg *sync.WaitGroup) {
+	r.playlists = make([]SpotifyPlaylist, len(jobs))
+	for job := range jobs {
+		res, err := requester(job)
+		if err != nil {
+			r.err = err
+		}
+
+		if res.ExternalUrls.Spotify == "" {
+			fmt.Printf("empty playlist id: %s", job)
+		}
+
+		r.playlists = append(r.playlists, res)
+		results <- r.playlists
+		wg.Done()
+	}
 }
