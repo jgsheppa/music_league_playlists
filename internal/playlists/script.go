@@ -7,7 +7,7 @@ import (
 )
 
 func Run() error {
-	if err := RemoveExistingPlaylist("./playlists.json"); err != nil {
+	if err := RemoveExistingPlaylist("./assets/playlists.json"); err != nil {
 		return err
 	}
 

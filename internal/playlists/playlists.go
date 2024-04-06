@@ -221,6 +221,7 @@ func MergeLeagueData(directory, filename string) error {
 		if err := json.Unmarshal(data, &list); err != nil {
 			return err
 		}
+
 		mergedList = append(mergedList, list...)
 	}
 
@@ -285,7 +286,7 @@ func (p *Playlist) CreatePlaylistJSON(playlists []SpotifyPlaylist) error {
 		return err
 	}
 
-	err = os.WriteFile("playlists.json", jsonBytes, 0644)
+	err = os.WriteFile("assets/playlists.json", jsonBytes, 0644)
 	if err != nil {
 		return err
 	}
@@ -312,7 +313,6 @@ func NewPlaylist() (*Playlist, error) {
 }
 
 func (p *Playlist) getSpotifyPlaylist(id string) (SpotifyPlaylist, error) {
-	fmt.Printf("fetching spotify playlist with id %s \n", id)
 	var playlist SpotifyPlaylist
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", SpotifyURL, id), &strings.Reader{})
 	if err != nil {
@@ -328,7 +328,6 @@ func (p *Playlist) getSpotifyPlaylist(id string) (SpotifyPlaylist, error) {
 
 	json.NewDecoder(resp.Body).Decode(&playlist)
 
-	fmt.Printf("finished fetching spotify playlist with id %s \n", id)
 	return playlist, nil
 }
 
