@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jgsheppa/music_league_playlists/internal/spotify"
 )
 
 type MusicLeaguePlaylist struct {
@@ -200,7 +202,6 @@ func GetPlaylistIDs(playlists []byte) ([]string, error) {
 
 const (
 	SpotifyURL = "https://api.spotify.com/v1/playlists/"
-	tokenURL   = "https://accounts.spotify.com/api/token"
 )
 
 type PlaylistsByLeague = map[string][]SpotifyPlaylist
@@ -294,22 +295,18 @@ func (p *Playlist) CreatePlaylistJSON(playlists []SpotifyPlaylist) error {
 }
 
 type Playlist struct {
-	token Token
-}
-
-type Token struct {
-	AccessToken string `json:"access_token,omitempty"`
-	TokenType   string `json:"token_type,omitempty"`
-	ExpiresIn   int    `json:"expires_in,omitempty"`
+	token spotify.Token
 }
 
 func NewPlaylist() (*Playlist, error) {
-	token, err := getToken()
+	spotifyClient := spotify.NewSpotifyClient()
+
+	_, err := spotifyClient.WithToken()
 	if err != nil {
 		return &Playlist{}, err
 	}
 
-	return &Playlist{token}, nil
+	return &Playlist{token: spotifyClient.Token}, nil
 }
 
 func (p *Playlist) getSpotifyPlaylist(id string) (SpotifyPlaylist, error) {

@@ -1,4 +1,4 @@
-package playlists
+package spotify
 
 import (
 	"encoding/json"
@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+const (
+	tokenURL = "https://accounts.spotify.com/api/token"
+)
+
+type Token struct {
+	AccessToken string `json:"access_token,omitempty"`
+	TokenType   string `json:"token_type,omitempty"`
+	ExpiresIn   int    `json:"expires_in,omitempty"`
+}
+
+// getToken is used to fetch the Spotify API's credentials
 func getToken() (Token, error) {
 	var token Token
 
