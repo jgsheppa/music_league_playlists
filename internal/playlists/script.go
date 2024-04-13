@@ -19,7 +19,7 @@ func Run() error {
 		return errors.Join(errors.New("could not merge music league playlists"), err)
 	}
 
-	playlistConfig, err := NewPlaylist()
+	playlistClient, err := NewPlaylist()
 	if err != nil {
 		return errors.Join(errors.New("could not initialize playlist"), err)
 	}
@@ -31,12 +31,12 @@ func Run() error {
 		return errors.Join(errors.New("could not create playlist id file"), err)
 	}
 
-	playlists, err := playlistConfig.GetPlaylists(playlistIDsFilePath)
+	playlists, err := playlistClient.GetPlaylists(playlistIDsFilePath)
 	if err != nil {
 		return errors.Join(errors.New("could not get playlists"), err)
 	}
 
-	err = playlistConfig.CreatePlaylistJSON(playlists)
+	err = playlistClient.CreatePlaylistJSON(playlists)
 	if err != nil {
 		return errors.Join(errors.New("could create merged playlist json file"), err)
 	}

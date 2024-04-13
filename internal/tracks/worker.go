@@ -19,7 +19,7 @@ func NewWorker() *Result {
 func (r *Result) worker(requester func(id string) (Items, error), jobs <-chan string, results chan<- Items, wg *sync.WaitGroup) {
 	r.tracks = make(Items, len(jobs))
 	for job := range jobs {
-		res, err := requester(fmt.Sprintf("%s%s", spotify.PlaylistURL, job))
+		res, err := requester(fmt.Sprintf("%s%s/tracks", spotify.PlaylistURL, job))
 		if err != nil {
 			r.err = err
 		}

@@ -1,6 +1,8 @@
 package tracks
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -139,7 +141,7 @@ func NewTrack() (*Track, error) {
 }
 
 func (t *Track) getSpotifyTracks(url string) (Items, error) {
-	playlist, err := spotify.CreateSpotifyRequest[SpotifyTracks](url, t.Token)
+	playlist, err := spotify.CreateSpotifyRequest[SpotifyTracks](url, t.SpotifyClient.Token)
 	if err != nil {
 		return Items{}, err
 	}
@@ -147,14 +149,13 @@ func (t *Track) getSpotifyTracks(url string) (Items, error) {
 	return playlist.Items, nil
 }
 
-func (p *Track) GetTracks(filepath string) (Items, error) {
-	start := time.Now()
-	file, err := os.ReadFile(filepath)
-	if err != nil {
-		return Items{}, err
+func (t *Track) GetTracks(filepath string) (Items, error) {
+	if t.Token.AccessToken == "" {
+		return Items{}, errors.New("no spotify access token found")
 	}
 
-	ids, err := playlists.GetPlaylistIDs(file)
+	start := time.Now()
+	ids, err := playlists.ReadTestIDs(filepath)
 	if err != nil {
 		return Items{}, err
 	}
@@ -166,7 +167,7 @@ func (p *Track) GetTracks(filepath string) (Items, error) {
 
 	numWorkers := 20
 	for w := 0; w < numWorkers; w++ {
-		go res.worker(p.getSpotifyTracks, jobs, results, &wg)
+		go res.worker(t.getSpotifyTracks, jobs, results, &wg)
 	}
 	wg.Add(len(ids))
 
@@ -181,4 +182,17 @@ func (p *Track) GetTracks(filepath string) (Items, error) {
 	fmt.Println("successfully fetched all tracks")
 	fmt.Printf("finish in %f seconds \n", finish)
 	return res.tracks, nil
+}
+
+func (t *Track) CreateTrackJSON(tracks Items) error {
+	jsonBytes, err := json.Marshal(tracks)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("assets/tracks.json", jsonBytes, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
