@@ -2,15 +2,14 @@ package playlists
 
 import (
 	"errors"
-	"os"
 )
 
 func Run() error {
-	if err := RemoveExistingPlaylist("./assets/playlists.json"); err != nil {
+	if err := RemoveExistingFile("./assets/playlists.json"); err != nil {
 		return err
 	}
 
-	if err := RemoveExistingPlaylist("./assets/music-league.json"); err != nil {
+	if err := RemoveExistingFile("./assets/music-league.json"); err != nil {
 		return err
 	}
 
@@ -40,16 +39,5 @@ func Run() error {
 	if err != nil {
 		return errors.Join(errors.New("could create merged playlist json file"), err)
 	}
-	return nil
-}
-
-func RemoveExistingPlaylist(filepath string) error {
-	if _, err := os.Stat(filepath); errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-	if err := os.Remove(filepath); err != nil {
-		return err
-	}
-
 	return nil
 }

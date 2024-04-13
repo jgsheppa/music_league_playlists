@@ -8,12 +8,12 @@ import (
 	"github.com/jgsheppa/music_league_playlists/internal/playlists"
 )
 
-func TestRemoveExistingPlaylist(t *testing.T) {
+func TestRemoveExistingFile(t *testing.T) {
 	t.Parallel()
 
 	filepath := "./testdata/test_playlist.txt"
 
-	if err := playlists.RemoveExistingPlaylist(filepath); err != nil {
+	if err := playlists.RemoveExistingFile(filepath); err != nil {
 		t.Fatalf("could not remove test file")
 	}
 

@@ -10,22 +10,30 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
-func Run() error {
+func RunIndexPlaylists() error {
 	esClient, err := SetupElasticClient()
 	if err != nil {
 		return err
 	}
 
-	if err := createIndex(esClient, PlaylistIndex, "./assets/playlists.json"); err != nil {
-		return err
-	}
-
-	if err := createIndex(esClient, SongIndex, "./assets/songs.json"); err != nil {
+	if err := createPlaylistIndex(esClient, PlaylistIndex, "./assets/playlists.json"); err != nil {
 		return err
 	}
 
 	return nil
+}
 
+func RunIndexTracks() error {
+	esClient, err := SetupElasticClient()
+	if err != nil {
+		return err
+	}
+
+	if err := createTracksIndex(esClient, TrackIndex, "./assets/tracks.json"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func SetupElasticClient() (*elasticsearch.Client, error) {
@@ -56,24 +64,4 @@ func SetupElasticClient() (*elasticsearch.Client, error) {
 	fmt.Printf("successfully connected to elastic node at the following url: %s \n", esURL)
 
 	return esClient, nil
-}
-
-func createIndex(esClient *elasticsearch.Client, index, filepath string) error {
-	client := NewSearchClient(esClient)
-	client.WithIndex(index)
-	client.WithBulkIndexer()
-	client.WithFile(filepath)
-
-	if err := client.RemoveIndex(client.index); err != nil {
-		return err
-	}
-
-	if err := client.CreateIndex(client.index); err != nil {
-		return err
-	}
-
-	if err := client.IndexPlaylists(); err != nil {
-		return err
-	}
-	return nil
 }

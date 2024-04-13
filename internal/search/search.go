@@ -3,10 +3,8 @@ package search
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -16,12 +14,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/elastic/go-elasticsearch/v8/esutil"
-	"github.com/jgsheppa/music_league_playlists/internal/playlists"
-)
-
-const (
-	PlaylistIndex = "playlist"
-	SongIndex     = "song"
 )
 
 type ElasticSearch struct {
@@ -119,54 +111,6 @@ func (es *ElasticSearch) displayBulkIndexerStats(start time.Time) {
 			humanize.Comma(int64(1000.0/float64(dur/time.Millisecond)*float64(biStats.NumFlushed))),
 		)
 	}
-}
-
-func (es *ElasticSearch) CreateIndex(index string) error {
-	_, err := es.client.Indices.Create(index)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (es *ElasticSearch) RemoveIndex(index string) error {
-	_, err := es.client.Indices.Delete([]string{index})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (es *ElasticSearch) IndexPlaylists() error {
-	var jsonData []playlists.SpotifyPlaylist
-	data, err := os.ReadFile(es.filepath)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(data, &jsonData); err != nil {
-		return err
-	}
-
-	var countSuccessful uint64
-	start := time.Now().UTC()
-
-	for i, playlist := range jsonData {
-		fmt.Println(i)
-		data, err := json.Marshal(playlist)
-		if err != nil {
-			return err
-		}
-		es.indexDataInBulk(data, countSuccessful)
-	}
-
-	if err := es.bulkIndexer.Close(context.Background()); err != nil {
-		log.Fatalf("Unexpected error: %s", err)
-	}
-
-	es.displayBulkIndexerStats(start)
-
-	return nil
 }
 
 func (es *ElasticSearch) SearchField() (*esapi.Response, error) {

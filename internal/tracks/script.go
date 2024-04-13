@@ -2,9 +2,14 @@ package tracks
 
 import (
 	"errors"
+
+	"github.com/jgsheppa/music_league_playlists/internal/playlists"
 )
 
 func Run() error {
+	if err := playlists.RemoveExistingFile("./assets/tracks.json"); err != nil {
+		return err
+	}
 
 	trackClient, err := NewTrack()
 	if err != nil {

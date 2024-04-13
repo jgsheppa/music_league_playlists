@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"strings"
 )
@@ -61,4 +62,15 @@ func ReadTestIDs(filepath string) ([]string, error) {
 	}
 
 	return ids, nil
+}
+
+func RemoveExistingFile(filepath string) error {
+	if _, err := os.Stat(filepath); errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err := os.Remove(filepath); err != nil {
+		return err
+	}
+
+	return nil
 }
