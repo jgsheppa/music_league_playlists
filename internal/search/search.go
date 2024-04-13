@@ -1,16 +1,11 @@
 package search
 
 import (
-	"bytes"
-	"context"
 	"fmt"
-	"log"
 	"runtime"
 	"strings"
-	"sync/atomic"
 	"time"
 
-	humanize "github.com/dustin/go-humanize"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/elastic/go-elasticsearch/v8/esutil"
@@ -68,51 +63,6 @@ func (es *ElasticSearch) WithBulkIndexer() *ElasticSearch {
 	return es
 }
 
-func (es *ElasticSearch) indexDataInBulk(data []byte, countSuccessful uint64) {
-	err := es.bulkIndexer.Add(
-		context.Background(),
-		esutil.BulkIndexerItem{
-			Action: "index",
-			Body:   bytes.NewReader(data),
-			OnSuccess: func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem) {
-				atomic.AddUint64(&countSuccessful, 1)
-			},
-			OnFailure: func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error) {
-				if err != nil {
-					log.Printf("ERROR: %s", err)
-				} else {
-					log.Printf("ERROR: %s: %s", res.Error.Type, res.Error.Reason)
-				}
-			},
-		},
-	)
-	if err != nil {
-		log.Fatalf("Unexpected error: %s", err)
-	}
-}
-
-func (es *ElasticSearch) displayBulkIndexerStats(start time.Time) {
-	biStats := es.bulkIndexer.Stats()
-	dur := time.Since(start)
-
-	if biStats.NumFailed > 0 {
-		log.Fatalf(
-			"Indexed [%s] documents with [%s] errors in %s (%s docs/sec)",
-			humanize.Comma(int64(biStats.NumFlushed)),
-			humanize.Comma(int64(biStats.NumFailed)),
-			dur.Truncate(time.Millisecond),
-			humanize.Comma(int64(1000.0/float64(dur/time.Millisecond)*float64(biStats.NumFlushed))),
-		)
-	} else {
-		log.Printf(
-			"Sucessfully indexed [%s] documents in %s (%s docs/sec)",
-			humanize.Comma(int64(biStats.NumFlushed)),
-			dur.Truncate(time.Millisecond),
-			humanize.Comma(int64(1000.0/float64(dur/time.Millisecond)*float64(biStats.NumFlushed))),
-		)
-	}
-}
-
 func (es *ElasticSearch) SearchField() (*esapi.Response, error) {
 
 	query := fmt.Sprintf(`{ "query": {"bool": {"must": [{ "match": {"%s" : {"query": "%s"} } }] } } }`, es.query.field, es.query.value)
@@ -141,4 +91,111 @@ type SearchResponse struct {
 		MaxScore any   `json:"max_score,omitempty"`
 		Hits     []any `json:"hits"`
 	} `json:"hits,omitempty"`
+}
+
+type TrackSearchResponse struct {
+	Took     int  `json:"took,omitempty"`
+	TimedOut bool `json:"timed_out,omitempty"`
+	Shards   struct {
+		Total      int `json:"total,omitempty"`
+		Successful int `json:"successful,omitempty"`
+		Skipped    int `json:"skipped,omitempty"`
+		Failed     int `json:"failed,omitempty"`
+	} `json:"_shards,omitempty"`
+	Hits struct {
+		Total struct {
+			Value    int    `json:"value,omitempty"`
+			Relation string `json:"relation,omitempty"`
+		} `json:"total,omitempty"`
+		MaxScore any         `json:"max_score,omitempty"`
+		Hits     []FoundItem `json:"hits"`
+	} `json:"hits,omitempty"`
+}
+
+type FoundItem struct {
+	ID     string  `json:"_id"`
+	Index  string  `json:"_index"`
+	Score  float64 `json:"_score"`
+	Source struct {
+		AddedAt time.Time `json:"added_at"`
+		AddedBy struct {
+			ExternalUrls struct {
+				Spotify string `json:"spotify"`
+			} `json:"external_urls"`
+			Followers struct {
+			} `json:"followers"`
+			Href string `json:"href"`
+			ID   string `json:"id"`
+			Type string `json:"type"`
+			URI  string `json:"uri"`
+		} `json:"added_by"`
+		Track struct {
+			Album struct {
+				AlbumType string `json:"album_type"`
+				Artists   []struct {
+					ExternalUrls struct {
+						Spotify string `json:"spotify"`
+					} `json:"external_urls"`
+					Href string `json:"href"`
+					ID   string `json:"id"`
+					Name string `json:"name"`
+					Type string `json:"type"`
+					URI  string `json:"uri"`
+				} `json:"artists"`
+				AvailableMarkets []string `json:"available_markets"`
+				ExternalUrls     struct {
+					Spotify string `json:"spotify"`
+				} `json:"external_urls"`
+				Href   string `json:"href"`
+				ID     string `json:"id"`
+				Images []struct {
+					Height int    `json:"height"`
+					URL    string `json:"url"`
+					Width  int    `json:"width"`
+				} `json:"images"`
+				Name                 string `json:"name"`
+				ReleaseDate          string `json:"release_date"`
+				ReleaseDatePrecision string `json:"release_date_precision"`
+				Restrictions         struct {
+				} `json:"restrictions"`
+				TotalTracks int    `json:"total_tracks"`
+				Type        string `json:"type"`
+				URI         string `json:"uri"`
+			} `json:"album"`
+			Artists []struct {
+				ExternalUrls struct {
+					Spotify string `json:"spotify"`
+				} `json:"external_urls"`
+				Followers struct {
+				} `json:"followers"`
+				Href string `json:"href"`
+				ID   string `json:"id"`
+				Name string `json:"name"`
+				Type string `json:"type"`
+				URI  string `json:"uri"`
+			} `json:"artists"`
+			AvailableMarkets []string `json:"available_markets"`
+			DiscNumber       int      `json:"disc_number"`
+			DurationMs       int      `json:"duration_ms"`
+			ExternalIds      struct {
+				Isrc string `json:"isrc"`
+			} `json:"external_ids"`
+			ExternalUrls struct {
+				Spotify string `json:"spotify"`
+			} `json:"external_urls"`
+			Href       string `json:"href"`
+			ID         string `json:"id"`
+			LinkedFrom struct {
+			} `json:"linked_from"`
+			Name         string `json:"name"`
+			Popularity   int    `json:"popularity"`
+			PreviewURL   string `json:"preview_url"`
+			Restrictions struct {
+			} `json:"restrictions"`
+			TrackNumber int    `json:"track_number"`
+			Type        string `json:"type"`
+			URI         string `json:"uri"`
+		} `json:"track"`
+	} `json:"_source"`
+	Type string `json:"_type"`
 }

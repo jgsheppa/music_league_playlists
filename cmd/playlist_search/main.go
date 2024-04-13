@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 
-	"github.com/jgsheppa/music_league_playlists/internal/playlists"
 	"github.com/jgsheppa/music_league_playlists/internal/search"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -16,31 +16,23 @@ func main() {
 		log.Fatal(err)
 	}
 	client := search.NewSearchClient(esClient)
-	client.WithIndex("playlist")
-	client.WithQuery("tracks.items.track.name", "Surrender My Heart")
+	client.WithIndex("track")
+	client.WithQuery("track.name", "Dio")
 	res, err := client.SearchField()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	decoder := json.NewDecoder(res.Body)
-	var result search.SearchResponse
-
-	err = decoder.Decode(&result)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Fatalf("could not decode json: %e", err)
 	}
 
-	b, err := json.Marshal(result.Hits.Hits)
-	if err != nil {
-		log.Fatalf("could not marshall json: %e", err)
-	}
-
-	var foundPlaylists []playlists.SpotifyPlaylist
-	err = json.Unmarshal(b, &foundPlaylists)
+	var foundPlaylists search.TrackSearchResponse
+	err = json.Unmarshal(body, &foundPlaylists)
 	if err != nil {
 		log.Fatalf("could not unmarshall json: %e", err)
 	}
-	fmt.Println(foundPlaylists)
+	fmt.Println(foundPlaylists.Hits.Hits[0].Source.Track.Artists)
 
 }
