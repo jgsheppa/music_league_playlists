@@ -2,7 +2,6 @@ package playlists
 
 import (
 	"errors"
-	"fmt"
 	"os"
 )
 
@@ -23,10 +22,16 @@ func Run() error {
 	playlistConfig, err := NewPlaylist()
 	if err != nil {
 		return errors.Join(errors.New("could not initialize playlist"), err)
-
 	}
 
-	playlists, err := playlistConfig.GetPlaylists(fmt.Sprintf("./assets/%s", "music-league.json"))
+	playlistIDsFilePath := "./assets/playlist-ids.txt"
+
+	err = CreatePlaylistIDFile("./assets/music-league.json", playlistIDsFilePath)
+	if err != nil {
+		return errors.Join(errors.New("could not create playlist id file"), err)
+	}
+
+	playlists, err := playlistConfig.GetPlaylists(playlistIDsFilePath)
 	if err != nil {
 		return errors.Join(errors.New("could not get playlists"), err)
 	}

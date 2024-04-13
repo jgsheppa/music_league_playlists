@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -182,28 +181,6 @@ type SpotifyPlaylist struct {
 	URI  string `json:"uri,omitempty"`
 }
 
-func GetPlaylistIDs(playlists []byte) ([]string, error) {
-	var list MusicLeaguePlaylists
-	if err := json.Unmarshal(playlists, &list); err != nil {
-		return nil, err
-	}
-
-	var ids []string
-	for _, playlist := range list {
-		id := strings.Split(playlist.PlaylistURL, "playlist/")
-
-		if len(id) == 2 {
-			ids = append(ids, id[1])
-		}
-	}
-
-	return ids, nil
-}
-
-const (
-	SpotifyURL = "https://api.spotify.com/v1/playlists/"
-)
-
 type PlaylistsByLeague = map[string][]SpotifyPlaylist
 
 func MergeLeagueData(directory, filename string) error {
@@ -214,16 +191,18 @@ func MergeLeagueData(directory, filename string) error {
 
 	var mergedList MusicLeaguePlaylists
 	for _, file := range files {
-		data, err := os.ReadFile(fmt.Sprintf("%s/%s", directory, file.Name()))
-		if err != nil {
-			return err
-		}
-		var list MusicLeaguePlaylists
-		if err := json.Unmarshal(data, &list); err != nil {
-			return err
-		}
+		if strings.Contains(file.Name(), ".json") {
+			data, err := os.ReadFile(fmt.Sprintf("%s/%s", directory, file.Name()))
+			if err != nil {
+				return err
+			}
+			var list MusicLeaguePlaylists
+			if err := json.Unmarshal(data, &list); err != nil {
+				return err
+			}
 
-		mergedList = append(mergedList, list...)
+			mergedList = append(mergedList, list...)
+		}
 	}
 
 	jsonBytes, err := json.Marshal(mergedList)
@@ -247,12 +226,7 @@ func MergeLeagueData(directory, filename string) error {
 
 func (p *Playlist) GetPlaylists(filepath string) ([]SpotifyPlaylist, error) {
 	start := time.Now()
-	file, err := os.ReadFile(filepath)
-	if err != nil {
-		return []SpotifyPlaylist{}, err
-	}
-
-	ids, err := GetPlaylistIDs(file)
+	ids, err := ReadTestIDs(filepath)
 	if err != nil {
 		return []SpotifyPlaylist{}, err
 	}
@@ -295,7 +269,7 @@ func (p *Playlist) CreatePlaylistJSON(playlists []SpotifyPlaylist) error {
 }
 
 type Playlist struct {
-	token spotify.Token
+	spotify.SpotifyClient
 }
 
 func NewPlaylist() (*Playlist, error) {
@@ -306,24 +280,14 @@ func NewPlaylist() (*Playlist, error) {
 		return &Playlist{}, err
 	}
 
-	return &Playlist{token: spotifyClient.Token}, nil
+	return &Playlist{SpotifyClient: *spotifyClient}, nil
 }
 
-func (p *Playlist) getSpotifyPlaylist(id string) (SpotifyPlaylist, error) {
-	var playlist SpotifyPlaylist
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", SpotifyURL, id), &strings.Reader{})
+func (p *Playlist) getSpotifyPlaylist(url string) (SpotifyPlaylist, error) {
+	playlist, err := spotify.CreateSpotifyRequest[SpotifyPlaylist](url, p.Token)
 	if err != nil {
 		return SpotifyPlaylist{}, err
 	}
-	client := &http.Client{}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", p.token.AccessToken))
-	resp, err := client.Do(req)
-	if err != nil {
-		return SpotifyPlaylist{}, err
-	}
-	defer resp.Body.Close()
-
-	json.NewDecoder(resp.Body).Decode(&playlist)
 
 	return playlist, nil
 }
@@ -340,7 +304,7 @@ func NewWorker() *Result {
 func (r *Result) worker(requester func(id string) (SpotifyPlaylist, error), jobs <-chan string, results chan<- []SpotifyPlaylist, wg *sync.WaitGroup) {
 	r.playlists = make([]SpotifyPlaylist, len(jobs))
 	for job := range jobs {
-		res, err := requester(job)
+		res, err := requester(fmt.Sprintf("%s%s", spotify.PlaylistURL, job))
 		if err != nil {
 			r.err = err
 		}
