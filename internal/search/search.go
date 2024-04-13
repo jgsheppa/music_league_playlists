@@ -4,17 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
+	"strings"
 	"sync/atomic"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/elastic/go-elasticsearch/v8/esutil"
 	"github.com/jgsheppa/music_league_playlists/internal/playlists"
 )
@@ -30,6 +30,12 @@ type ElasticSearch struct {
 	err         error
 	index       string
 	filepath    string
+	query       Query
+}
+
+type Query struct {
+	field string
+	value string
 }
 
 func NewSearchClient(client *elasticsearch.Client) *ElasticSearch {
@@ -38,6 +44,13 @@ func NewSearchClient(client *elasticsearch.Client) *ElasticSearch {
 
 func (es *ElasticSearch) WithIndex(index string) *ElasticSearch {
 	es.index = index
+	return es
+}
+
+func (es *ElasticSearch) WithQuery(field, value string) *ElasticSearch {
+	es.query = Query{
+		field, value,
+	}
 	return es
 }
 
@@ -156,61 +169,32 @@ func (es *ElasticSearch) IndexPlaylists() error {
 	return nil
 }
 
-func Run() error {
-	esURL := os.Getenv("ENV_ES_URL")
-	if esURL == "" {
-		return errors.New("elasticsearch url cannot be empty")
-	}
+func (es *ElasticSearch) SearchField() (*esapi.Response, error) {
 
-	// Use a third-party package for implementing the backoff function
-	retryBackoff := backoff.NewExponentialBackOff()
+	query := fmt.Sprintf(`{ "query": {"bool": {"must": [{ "match": {"%s" : {"query": "%s"} } }] } } }`, es.query.field, es.query.value)
+	res, err := es.client.Search(es.client.Search.WithIndex(es.index), es.client.Search.WithBody(strings.NewReader(query)))
 
-	esConfig := elasticsearch.Config{
-		Addresses:     []string{esURL},
-		RetryOnStatus: []int{502, 503, 504, 429},
-		RetryBackoff: func(i int) time.Duration {
-			if i == 1 {
-				retryBackoff.Reset()
-			}
-			return retryBackoff.NextBackOff()
-		},
-		MaxRetries: 5,
-	}
-
-	esClient, err := elasticsearch.NewClient(esConfig)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Printf("successfully connected to elastic node at the following url: %s \n", esURL)
-
-	if err := createIndex(esClient, PlaylistIndex, "./assets/playlists.json"); err != nil {
-		return err
-	}
-
-	if err := createIndex(esClient, SongIndex, "./assets/songs.json"); err != nil {
-		return err
-	}
-
-	return nil
-
+	return res, nil
 }
 
-func createIndex(esClient *elasticsearch.Client, index, filepath string) error {
-	client := NewSearchClient(esClient)
-	client.WithIndex(index)
-	client.WithBulkIndexer()
-	client.WithFile(filepath)
-
-	if err := client.RemoveIndex(client.index); err != nil {
-		return err
-	}
-
-	if err := client.CreateIndex(client.index); err != nil {
-		return err
-	}
-
-	if err := client.IndexPlaylists(); err != nil {
-		return err
-	}
-	return nil
+type SearchResponse struct {
+	Took     int  `json:"took,omitempty"`
+	TimedOut bool `json:"timed_out,omitempty"`
+	Shards   struct {
+		Total      int `json:"total,omitempty"`
+		Successful int `json:"successful,omitempty"`
+		Skipped    int `json:"skipped,omitempty"`
+		Failed     int `json:"failed,omitempty"`
+	} `json:"_shards,omitempty"`
+	Hits struct {
+		Total struct {
+			Value    int    `json:"value,omitempty"`
+			Relation string `json:"relation,omitempty"`
+		} `json:"total,omitempty"`
+		MaxScore any   `json:"max_score,omitempty"`
+		Hits     []any `json:"hits"`
+	} `json:"hits,omitempty"`
 }
