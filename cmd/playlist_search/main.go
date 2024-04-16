@@ -16,8 +16,9 @@ func main() {
 		log.Fatal(err)
 	}
 	client := search.NewSearchClient(esClient)
-	client.WithIndex("track")
-	client.WithQuery("track.name", "Dio")
+
+	client.WithIndex(search.TrackIndex)
+	client.WithQuery("Dio")
 	res, err := client.SearchField()
 	if err != nil {
 		log.Fatal(err)

@@ -21,7 +21,6 @@ type ElasticSearch struct {
 }
 
 type Query struct {
-	field string
 	value string
 }
 
@@ -34,9 +33,9 @@ func (es *ElasticSearch) WithIndex(index string) *ElasticSearch {
 	return es
 }
 
-func (es *ElasticSearch) WithQuery(field, value string) *ElasticSearch {
+func (es *ElasticSearch) WithQuery(value string) *ElasticSearch {
 	es.query = Query{
-		field, value,
+		value,
 	}
 	return es
 }
@@ -64,9 +63,22 @@ func (es *ElasticSearch) WithBulkIndexer() *ElasticSearch {
 }
 
 func (es *ElasticSearch) SearchField() (*esapi.Response, error) {
-
-	query := fmt.Sprintf(`{ "query": {"bool": {"must": [{ "match": {"%s" : {"query": "%s"} } }] } } }`, es.query.field, es.query.value)
-	res, err := es.client.Search(es.client.Search.WithIndex(es.index), es.client.Search.WithBody(strings.NewReader(query)))
+	multiQuery := fmt.Sprintf(`{
+	  "query": {
+	    "multi_match": {
+	      "query": "%s",
+	      "type": "most_fields",
+	      "fields": [
+	        "track.artists.name" ,
+					"track.album.name",
+	        "track.name"
+	      ],
+				"fuzziness": "Auto",
+				"prefix_length": "2"
+	    }
+	  }
+	}`, es.query.value)
+	res, err := es.client.Search(es.client.Search.WithIndex(es.index), es.client.Search.WithBody(strings.NewReader(multiQuery)))
 
 	if err != nil {
 		return nil, err

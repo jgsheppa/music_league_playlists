@@ -1,0 +1,22 @@
+{{define "track"}}
+<div>
+  {{if not .Hits}}
+  <p>No matches found</p>
+  {{end}}
+  <p>{{len .Hits}} Matches</p>
+  <ul>
+    {{range $hit := .Hits}}
+    <li>
+      <p>Track: {{$hit.Source.Track.Name}}</p>
+
+      {{range $index, $artists := $hit.Source.Track.Artists}} {{if eq $index 0}}
+      <p>Artist: {{$artists.Name}}</p>
+      {{end}} {{end}} {{range $index, $element :=
+      $hit.Source.Track.Album.Images}} {{if eq $index 0}}
+      <img src="{{$element.URL}}" />
+      {{end}}{{end}}
+    </li>
+    {{end}}
+  </ul>
+</div>
+{{end}}
