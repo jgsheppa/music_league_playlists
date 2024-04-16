@@ -1,0 +1,52 @@
+{{define "home"}}
+<head>
+<title>ESC Search</title>
+<head>
+<main>
+<body>
+<div>
+  <form>
+    <div>
+      <label for="search">Search ESC Music</label>
+      <input
+        type="search"
+        name="query"
+        id="search"
+        placeholder="Search for a track"
+        required
+      />
+    </div>
+  </form>
+  <div>
+    {{if eq .Took 0}}
+    <p>Nothing yet...</p>
+    {{else}} {{template "results" .}} {{end}}
+  </div>
+  <div>
+</body>
+</main>
+    {{end}} {{define "results"}}
+    <div>
+      {{if not .Hits.Hits}}
+      <p>No matches found</p>
+      {{end}}
+      <p>{{len .Hits.Hits}} Matches</p>
+      <ul>
+        {{range $hit := .Hits.Hits}}
+        <li>
+          <p>Track: {{$hit.Source.Track.Name}}</p>
+
+          {{range $index, $artists := $hit.Source.Track.Artists}} {{if eq $index
+          0}}
+          <p>Artist: {{$artists.Name}}</p>
+          {{end}} {{end}} {{range $index, $element :=
+          $hit.Source.Track.Album.Images}} {{if eq $index 0}}
+          <img src="{{$element.URL}}" />
+          {{end}}{{end}}
+        </li>
+        {{end}}
+      </ul>
+    </div>
+    {{end}}
+  </div>
+</div>
