@@ -30,7 +30,7 @@ func (es *ElasticSearch) indexDataInBulk(data []byte, countSuccessful uint64) {
 		},
 	)
 	if err != nil {
-		log.Fatalf("Unexpected error: %s", err)
+		log.Printf("Unexpected error: %s", err)
 	}
 }
 
