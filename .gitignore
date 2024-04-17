@@ -22,9 +22,3 @@ go.work
 
 # env variables
 .env
-
-# playlist file
-playlists.json
-music-league.json
-playlist-ids.txt
-tracks.json
