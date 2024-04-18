@@ -1,0 +1,22 @@
+[
+  {
+    "id": "6441d41aa481455cabc898a3a3967e06",
+    "name": "Your go-to holiday favorites ",
+    "completed": "2022-12-25T04:10:03.276032Z",
+    "description": "Anything goes! Whatever makes you feel like it’s late December",
+    "downvotesPerUser": 4,
+    "highStakes": true,
+    "leagueId": "9e3f57dc7aae47f3a2583610462ca8cb",
+    "maxDownvotesPerSong": 2,
+    "maxUpvotesPerSong": 3,
+    "playlistUrl": "https://open.spotify.com/playlist/5eEM2OvywbYLaEzweH25UA",
+    "sequence": 1,
+    "songsPerUser": 2,
+    "startDate": "2022-12-11T03:51:04.925352Z",
+    "status": "COMPLETE",
+    "submissionsDue": "2022-12-20T05:00:00Z",
+    "upvotesPerUser": 15,
+    "votesDue": "2022-12-25T05:00:00Z",
+    "templateId": ""
+  }
+]
