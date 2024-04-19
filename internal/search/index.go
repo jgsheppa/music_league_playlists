@@ -27,7 +27,7 @@ func (es *ElasticSearch) CreateIndex(index string) error {
 
 func (es *ElasticSearch) RemoveIndex(index string) error {
 	res, err := es.client.Indices.Exists([]string{index})
-	if res.StatusCode == 404 {
+	if res.Status() == "404" {
 		return nil
 	}
 
