@@ -39,7 +39,7 @@ func (es *ElasticSearch) displayBulkIndexerStats(start time.Time) {
 	dur := time.Since(start)
 
 	if biStats.NumFailed > 0 {
-		log.Fatalf(
+		log.Printf(
 			"Indexed [%s] documents with [%s] errors in %s (%s docs/sec)",
 			humanize.Comma(int64(biStats.NumFlushed)),
 			humanize.Comma(int64(biStats.NumFailed)),
