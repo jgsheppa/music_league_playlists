@@ -26,7 +26,15 @@ func (es *ElasticSearch) CreateIndex(index string) error {
 }
 
 func (es *ElasticSearch) RemoveIndex(index string) error {
-	_, err := es.client.Indices.Delete([]string{index})
+	res, err := es.client.Indices.Exists([]string{index})
+	if err != nil {
+		return err
+	}
+	if res.StatusCode == 404 {
+		return nil
+	}
+
+	_, err = es.client.Indices.Delete([]string{index})
 	if err != nil {
 		return err
 	}
