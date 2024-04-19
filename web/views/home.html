@@ -11,11 +11,11 @@
   <title>ESC Search</title>
   <script src="https://cdn.tailwindcss.com"></script>
 <head>
-<body class="w-96 md:w-full lg:w-full">
+<body class="w-full">
 <main class="w-auto">
-<div class="w-auto p-6">
+<div class="w-auto">
   <form class="w-80">
-    <div class="flex flex-col gap-y-2">
+    <div class="flex flex-col gap-y-2 p-4">
       <label for="search">Search ESC Music</label>
       <input
         class="px-4 py-2 border-2 border-indigo-200 rounded-sm"
@@ -36,7 +36,7 @@
 </body>
 </html>
     {{end}} {{define "results"}}
-    <div class="w-96 md:w-full lg:w-full">
+    <div class="w-96 md:w-full lg:w-full p-4">
       {{if not .Hits.Hits}}
       <p>No matches found</p>
       {{end}}

@@ -26,14 +26,10 @@ func (es *ElasticSearch) CreateIndex(index string) error {
 }
 
 func (es *ElasticSearch) RemoveIndex(index string) error {
-	res, err := es.client.Indices.Exists([]string{index})
-	if res.Status() == "404" {
-		return nil
-	}
-
+	_, err := es.client.Indices.Exists([]string{index})
 	if err != nil {
-		log.Printf("could not check if index exists. status code: %d", res.StatusCode)
-		return err
+		log.Printf("could not check if index exists. status code")
+		return nil
 	}
 
 	_, err = es.client.Indices.Delete([]string{index})
