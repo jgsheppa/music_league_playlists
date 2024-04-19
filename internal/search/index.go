@@ -27,11 +27,13 @@ func (es *ElasticSearch) CreateIndex(index string) error {
 
 func (es *ElasticSearch) RemoveIndex(index string) error {
 	res, err := es.client.Indices.Exists([]string{index})
-	if err != nil {
-		return err
-	}
 	if res.StatusCode == 404 {
 		return nil
+	}
+
+	if err != nil {
+		log.Printf("could not check if index exists. status code: %d", res.StatusCode)
+		return err
 	}
 
 	_, err = es.client.Indices.Delete([]string{index})
@@ -135,7 +137,6 @@ func createTracksIndex(esClient *elasticsearch.Client, index, filepath string) e
 
 	if err := client.RemoveIndex(client.index); err != nil {
 		log.Printf("could not remove index %e", err)
-
 		return err
 	}
 
