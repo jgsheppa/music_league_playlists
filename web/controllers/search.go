@@ -58,7 +58,6 @@ func (s *Search) Home(c echo.Context) error {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(res)
 
 		body, err := io.ReadAll(res.Body)
 		if err != nil {

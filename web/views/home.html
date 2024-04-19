@@ -1,14 +1,16 @@
 {{define "home"}}
 <head>
 <title>ESC Search</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <head>
-<main>
-<body>
-<div>
-  <form>
-    <div>
+<body class="w-96 md:w-full lg:w-full">
+<main class="w-auto">
+<div class="w-auto p-6">
+  <form class="w-80">
+    <div class="flex flex-col gap-y-2">
       <label for="search">Search ESC Music</label>
       <input
+        class="px-4 py-2 border-2 border-indigo-200 rounded-sm"
         type="search"
         name="query"
         id="search"
@@ -17,32 +19,37 @@
       />
     </div>
   </form>
-  <div>
+  <div class="w-80">
     {{if eq .Took 0}}
     <p>Nothing yet...</p>
     {{else}} {{template "results" .}} {{end}}
   </div>
-  <div>
-</body>
 </main>
+</body>
     {{end}} {{define "results"}}
-    <div>
+    <div class="w-96 md:w-full lg:w-full">
       {{if not .Hits.Hits}}
       <p>No matches found</p>
       {{end}}
       <p>{{len .Hits.Hits}} Matches</p>
-      <ul>
+      <ul role="list" class="divide-y divide-gray-100 w-auto">
         {{range $hit := .Hits.Hits}}
-        <li>
-          <p>Track: {{$hit.Source.Track.Name}}</p>
-
-          {{range $index, $artists := $hit.Source.Track.Artists}} {{if eq $index
-          0}}
-          <p>Artist: {{$artists.Name}}</p>
-          {{end}} {{end}} {{range $index, $element :=
-          $hit.Source.Track.Album.Images}} {{if eq $index 0}}
-          <img src="{{$element.URL}}" />
-          {{end}}{{end}}
+        <li class="flex justify-between gap-x-6 py-5 w-auto">
+          <div class="flex gap-x-4">
+            {{range $index, $element := $hit.Source.Track.Album.Images}} 
+              {{if eq $index 0}}
+                <img src="{{$element.URL}}" alt="album image" class="h-16 w-16 rounded-sm flex-none bg-gray-50"/>
+                {{end}}
+                {{end}}
+          </div>
+          <div class="flex items-end flex-col w-fit">
+            {{range $index, $artists := $hit.Source.Track.Artists}} 
+              {{if eq $index 0}}
+              <p class="text-sm font-semibold leading-6 text-gray-900">{{$artists.Name}}</p>
+              {{end}}  
+            {{end}}
+            <p class="mt-1 truncate text-xs leading-5 text-gray-500">{{$hit.Source.Track.Name}}</p>
+          </div>
         </li>
         {{end}}
       </ul>
