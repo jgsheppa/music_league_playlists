@@ -68,10 +68,12 @@ func (es *ElasticSearch) IndexTracks() error {
 	var jsonData tracks.Items
 	data, err := os.ReadFile(es.filepath)
 	if err != nil {
+		log.Printf("could not read file: %e", err)
 		return err
 	}
 
 	if err := json.Unmarshal(data, &jsonData); err != nil {
+		log.Printf("could not unmarshal json: %e", err)
 		return err
 	}
 
@@ -81,6 +83,8 @@ func (es *ElasticSearch) IndexTracks() error {
 	for _, playlist := range jsonData {
 		data, err := json.Marshal(playlist)
 		if err != nil {
+			log.Printf("could not marshal json: %e", err)
+
 			return err
 		}
 		es.indexDataInBulk(data, countSuccessful)

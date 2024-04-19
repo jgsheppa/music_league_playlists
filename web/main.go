@@ -11,15 +11,15 @@ import (
 )
 
 func init() {
-	if err := search.RunIndexPlaylists(); err != nil {
-		log.Fatalf("could not index playlists: %e", err)
-	}
+	// if err := search.RunIndexPlaylists(); err != nil {
+	// 	log.Fatalf("could not index playlists: %e", err)
+	// }
 
+}
+func main() {
 	if err := search.RunIndexTracks(); err != nil {
 		log.Fatalf("could not index tracks: %e", err)
 	}
-}
-func main() {
 	esClient, err := search.SetupElasticClient()
 	if err != nil {
 		log.Fatal(err)
