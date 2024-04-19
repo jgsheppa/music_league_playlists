@@ -126,14 +126,20 @@ func createTracksIndex(esClient *elasticsearch.Client, index, filepath string) e
 	client.WithFile(filepath)
 
 	if err := client.RemoveIndex(client.index); err != nil {
+		log.Printf("could not remove index %e", err)
+
 		return err
 	}
 
 	if err := client.CreateIndex(client.index); err != nil {
+		log.Printf("could not create index %e", err)
+
 		return err
 	}
 
 	if err := client.IndexTracks(); err != nil {
+		log.Printf("could not index tracks %e", err)
+
 		return err
 	}
 	return nil

@@ -3,6 +3,7 @@ package search
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -23,13 +24,9 @@ func RunIndexPlaylists() error {
 	return nil
 }
 
-func RunIndexTracks() error {
-	esClient, err := SetupElasticClient()
-	if err != nil {
-		return err
-	}
-
+func RunIndexTracks(esClient *elasticsearch.Client) error {
 	if err := createTracksIndex(esClient, TrackIndex, "./assets/tracks.json"); err != nil {
+		log.Printf("could not create tracks index %e", err)
 		return err
 	}
 

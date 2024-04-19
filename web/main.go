@@ -17,13 +17,15 @@ func init() {
 
 }
 func main() {
-	if err := search.RunIndexTracks(); err != nil {
-		log.Fatalf("could not index tracks: %e", err)
-	}
 	esClient, err := search.SetupElasticClient()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if err := search.RunIndexTracks(esClient); err != nil {
+		log.Fatalf("could not index tracks: %e", err)
+	}
+
 	client := search.NewSearchClient(esClient)
 
 	t := views.NewTemplate()
