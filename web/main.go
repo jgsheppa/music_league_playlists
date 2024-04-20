@@ -10,12 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func init() {
-	// if err := search.RunIndexPlaylists(); err != nil {
-	// 	log.Fatalf("could not index playlists: %e", err)
-	// }
-
-}
 func main() {
 	esClient, err := search.SetupElasticClient()
 	if err != nil {

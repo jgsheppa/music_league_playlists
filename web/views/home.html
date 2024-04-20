@@ -30,7 +30,7 @@
   </form>
   <div class="w-96 md:w-full lg:w-4/5 flex items-start justify-center">
     {{if eq .Took 0}}
-    <p>Nothing yet...</p>
+    <p>Search for something already!</p>
     {{else}} {{template "results" .}} {{end}}
   </div>
 </main>
@@ -51,14 +51,18 @@
                 <img src="{{$element.URL}}" alt="album image" class="h-16 w-16 rounded-sm flex-none bg-gray-50"/>
                 {{end}}
                 {{end}}
+                <div class="min-w-0 flex-auto">
+                  {{range $index, $artists := $hit.Source.Track.Artists}} 
+                    {{if eq $index 0}}
+                        <p class="text-sm font-semibold leading-6 text-gray-900">{{$artists.Name}}</p>
+                    {{end}}  
+                  {{end}}
+                  <a class="text-pretty mt-1 truncate text-left leading-5 text-xs text-blue-600 visited:text-purple-600 underline font-semibold" href="{{$hit.Source.Track.ExternalUrls.Spotify}}" target="_blank">Song on Spotify</a>
+                </div>
           </div>
-          <div class="flex items-end flex-col w-fit">
-            {{range $index, $artists := $hit.Source.Track.Artists}} 
-              {{if eq $index 0}}
-              <p class="text-right text-sm font-semibold leading-6 text-gray-900">{{$artists.Name}}</p>
-              {{end}}  
-            {{end}}
-            <p class="text-right mt-1 truncate text-xs leading-5 text-gray-500">{{$hit.Source.Track.Name}}</p>
+          <div class="flex items-end flex-col w-fit gap-y-1">
+            <p class="text-pretty text-right text-sm leading-6 text-gray-900">{{$hit.Source.Track.Name}}</p>
+            <p class="text-pretty text-right mt-1 truncate text-xs leading-5 text-gray-500">{{$hit.Source.Track.Album.Name}}</p>
           </div>
         </li>
         {{end}}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 
@@ -34,6 +33,4 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not unmarshall json: %e", err)
 	}
-	fmt.Println(foundPlaylists.Hits.Hits[0].Source.Track.Artists)
-
 }

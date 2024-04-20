@@ -34,18 +34,18 @@ func RunIndexTracks(esClient *elasticsearch.Client) error {
 }
 
 func SetupElasticClient() (*elasticsearch.Client, error) {
-	esURL := os.Getenv("ES_URL")
-	if esURL == "" {
-		return nil, errors.New("elasticsearch url cannot be empty")
+	isProd := os.Getenv("IS_PROD")
+	if isProd == "" {
+		return nil, errors.New("environment cannot be empty")
 	}
 
 	apiKey := os.Getenv("ESC_API_KEY")
-	if esURL == "" {
+	if apiKey == "" && isProd == "true" {
 		return nil, errors.New("elasticsearch api key cannot be empty")
 	}
 
 	cloudID := os.Getenv("ES_CLOUD_ID")
-	if esURL == "" {
+	if cloudID == "" && isProd == "true" {
 		return nil, errors.New("elasticsearch cloud id cannot be empty")
 	}
 
@@ -53,7 +53,6 @@ func SetupElasticClient() (*elasticsearch.Client, error) {
 	retryBackoff := backoff.NewExponentialBackOff()
 
 	esConfig := elasticsearch.Config{
-		// Addresses:     []string{esURL},
 		CloudID:       cloudID,
 		APIKey:        apiKey,
 		RetryOnStatus: []int{502, 503, 504, 429},
@@ -66,11 +65,17 @@ func SetupElasticClient() (*elasticsearch.Client, error) {
 		MaxRetries: 5,
 	}
 
+	if isProd == "false" {
+		esConfig.Addresses = append(esConfig.Addresses, "http://localhost:9200")
+		esConfig.APIKey = ""
+		esConfig.CloudID = ""
+	}
+
 	esClient, err := elasticsearch.NewClient(esConfig)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("successfully connected to elastic node at the following url: %s \n", esURL)
+	fmt.Println("successfully connected to elastic node")
 
 	return esClient, nil
 }

@@ -18,30 +18,16 @@ const (
 )
 
 func (es *ElasticSearch) CreateIndex(index string) error {
-	res, err := es.client.Ping()
-	if err != nil {
-		log.Printf("could not ping client %v", err)
-		log.Printf("could not ping client %v", res)
-		return err
-	}
-
-	res, err = es.client.Indices.Create(index)
+	_, err := es.client.Indices.Create(index)
 	if err != nil {
 		log.Printf("could not create indice %v", err)
-		log.Printf("could not create indice %v", res)
 		return err
 	}
 	return nil
 }
 
 func (es *ElasticSearch) RemoveIndex(index string) error {
-	_, err := es.client.Indices.Exists([]string{index})
-	if err != nil {
-		log.Printf("could not check if index exists. status code")
-		return nil
-	}
-
-	_, err = es.client.Indices.Delete([]string{index})
+	_, err := es.client.Indices.Delete([]string{index})
 	if err != nil {
 		return err
 	}

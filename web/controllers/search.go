@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -28,19 +27,20 @@ func (s *Search) Result(c echo.Context) error {
 	s.sc.WithQuery(name)
 	res, err := s.sc.SearchField()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-	fmt.Println(res)
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Fatalf("could not decode json: %e", err)
+		log.Printf("could not decode json: %e", err)
+		return err
 	}
 
 	var foundPlaylists search.TrackSearchResponse
 	err = json.Unmarshal(body, &foundPlaylists)
 	if err != nil {
-		log.Fatalf("could not unmarshall json: %e", err)
+		log.Printf("could not unmarshall json: %e", err)
+		return err
 	}
 
 	return c.Render(http.StatusOK, "track", foundPlaylists.Hits)
@@ -49,24 +49,23 @@ func (s *Search) Result(c echo.Context) error {
 func (s *Search) Home(c echo.Context) error {
 	query := c.QueryParam("query")
 	var foundPlaylists search.TrackSearchResponse
-	fmt.Println(foundPlaylists)
 
 	if len(query) > 0 {
 		s.sc.WithIndex(search.TrackIndex)
 		s.sc.WithQuery(query)
 		res, err := s.sc.SearchField()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.Fatalf("could not decode json: %e", err)
+			log.Printf("could not decode json: %e \n", err)
 		}
 
 		err = json.Unmarshal(body, &foundPlaylists)
 		if err != nil {
-			log.Fatalf("could not unmarshall json: %e", err)
+			log.Printf("could not unmarshall json: %e \n", err)
 		}
 	}
 
