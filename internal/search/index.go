@@ -18,9 +18,17 @@ const (
 )
 
 func (es *ElasticSearch) CreateIndex(index string) error {
-	res, err := es.client.Indices.Create(index)
+	res, err := es.client.Ping()
 	if err != nil {
-		log.Println(res)
+		log.Printf("could not ping client %v", err)
+		log.Printf("could not ping client %v", res)
+		return err
+	}
+
+	res, err = es.client.Indices.Create(index)
+	if err != nil {
+		log.Printf("could not create indice %v", err)
+		log.Printf("could not create indice %v", res)
 		return err
 	}
 	return nil
