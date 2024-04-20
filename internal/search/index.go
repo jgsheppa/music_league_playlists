@@ -18,8 +18,9 @@ const (
 )
 
 func (es *ElasticSearch) CreateIndex(index string) error {
-	_, err := es.client.Indices.Create(index)
+	res, err := es.client.Indices.Create(index)
 	if err != nil {
+		log.Println(res)
 		return err
 	}
 	return nil
