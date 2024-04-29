@@ -1,10 +1,8 @@
 package tracks
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -182,17 +180,4 @@ func (t *Track) GetTracks(filepath string) (Items, error) {
 	fmt.Println("successfully fetched all tracks")
 	fmt.Printf("finish in %f seconds \n", finish)
 	return res.tracks, nil
-}
-
-func (t *Track) CreateTrackJSON(tracks Items) error {
-	jsonBytes, err := json.Marshal(tracks)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile("assets/tracks.json", jsonBytes, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
 }

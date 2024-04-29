@@ -29,6 +29,7 @@ func main() {
 	e := echo.New()
 	e.Renderer = t
 	e.GET("/", searchController.Home)
+	e.GET("/stats", searchController.Stats)
 	e.Static("/static", "web/static")
 
 	e.Logger.Fatal(e.Start(":8080"))

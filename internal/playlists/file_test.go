@@ -1,10 +1,9 @@
 package playlists_test
 
 import (
-	"errors"
-	"os"
 	"testing"
 
+	"github.com/jgsheppa/batbelt"
 	"github.com/jgsheppa/music_league_playlists/internal/playlists"
 )
 
@@ -19,12 +18,11 @@ func TestCreatePlaylistIDFile(t *testing.T) {
 		t.Errorf("could not create id file: %e", err)
 	}
 
-	if _, err = os.Stat(idFilepath); errors.Is(err, os.ErrNotExist) {
-		t.Errorf("could not find created playlist: %e", err)
-	}
+	belt := batbelt.NewBatbelt()
+	belt = belt.RemoveFile(idFilepath)
 
-	if err = os.Remove(idFilepath); err != nil {
-		t.Errorf("could not remove playlist: %e", err)
+	if belt.Error() != nil {
+		t.Errorf("could not remove playlist: %e", belt.Error())
 	}
 }
 

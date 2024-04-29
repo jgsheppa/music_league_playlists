@@ -3,12 +3,14 @@ package tracks
 import (
 	"errors"
 
-	"github.com/jgsheppa/music_league_playlists/internal/playlists"
+	"github.com/jgsheppa/batbelt"
 )
 
 func Run() error {
-	if err := playlists.RemoveExistingFile("./assets/tracks.json"); err != nil {
-		return err
+	belt := batbelt.NewBatbelt()
+	belt = belt.RemoveFile("./web/assets/tracks.json")
+	if belt.Error() != nil {
+		return belt.Error()
 	}
 
 	trackClient, err := NewTrack()
@@ -23,9 +25,9 @@ func Run() error {
 		return errors.Join(errors.New("could not get spotify tracks"), err)
 	}
 
-	err = trackClient.CreateTrackJSON(tracks)
-	if err != nil {
-		return errors.Join(errors.New("could not get spotify tracks"), err)
+	belt.CreateJSONFile(tracks, "web/assets/tracks.json")
+	if belt.Error() != nil {
+		return errors.Join(errors.New("could not get spotify tracks"), belt.Error())
 	}
 
 	return nil

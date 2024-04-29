@@ -62,8 +62,60 @@ func (es *ElasticSearch) WithBulkIndexer() *ElasticSearch {
 	return es
 }
 
+func (es *ElasticSearch) AggregateFrequentItemSets() (*esapi.Response, error) {
+	aggregation := fmt.Sprint(`{
+		"size":0,
+		"aggs":{
+			 "my_agg":{
+					"frequent_item_sets":{
+						 "minimum_set_size":3,
+						 "fields":[
+								{
+									 "field":"track.artists.name"
+								},
+								{
+									 "field":"track.album.name",
+								},
+								{
+									"field":"track.name",
+							 }
+						 ],
+						 "size":3
+					}
+			 }
+		}
+ }`)
+
+	res, err := es.client.Search(es.client.Search.WithIndex(es.index), es.client.Search.WithBody(strings.NewReader(aggregation)), es.client.Search.WithPretty())
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (es *ElasticSearch) AggregateByTerm() (*esapi.Response, error) {
+	aggregation := fmt.Sprint(`{
+	  "aggs": {
+	    "artists": {
+	      "terms": {
+	        "field": "track.artists.name"
+	      }
+	    }
+	  }
+	}`)
+
+	res, err := es.client.Search(es.client.Search.WithIndex(es.index), es.client.Search.WithBody(strings.NewReader(aggregation)), es.client.Search.WithPretty())
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (es *ElasticSearch) SearchField() (*esapi.Response, error) {
 	multiQuery := fmt.Sprintf(`{
+		"sort" : [
+			{ "_score" : "desc" }
+  	],
 	  "query": {
 	    "multi_match": {
 	      "query": "%s",
@@ -78,7 +130,7 @@ func (es *ElasticSearch) SearchField() (*esapi.Response, error) {
 	    }
 	  }
 	}`, es.query.value)
-	res, err := es.client.Search(es.client.Search.WithIndex(es.index), es.client.Search.WithBody(strings.NewReader(multiQuery)))
+	res, err := es.client.Search(es.client.Search.WithIndex(es.index), es.client.Search.WithBody(strings.NewReader(multiQuery)), es.client.Search.WithPretty())
 
 	if err != nil {
 		return nil, err

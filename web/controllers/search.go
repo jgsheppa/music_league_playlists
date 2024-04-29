@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -18,32 +19,6 @@ func NewSearch(sc *search.ElasticSearch) *Search {
 
 type Search struct {
 	sc *search.ElasticSearch
-}
-
-func (s *Search) Result(c echo.Context) error {
-	name := c.QueryParam("name")
-
-	s.sc.WithIndex(search.TrackIndex)
-	s.sc.WithQuery(name)
-	res, err := s.sc.SearchField()
-	if err != nil {
-		log.Println(err)
-	}
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Printf("could not decode json: %e", err)
-		return err
-	}
-
-	var foundPlaylists search.TrackSearchResponse
-	err = json.Unmarshal(body, &foundPlaylists)
-	if err != nil {
-		log.Printf("could not unmarshall json: %e", err)
-		return err
-	}
-
-	return c.Render(http.StatusOK, "track", foundPlaylists.Hits)
 }
 
 func (s *Search) Home(c echo.Context) error {
@@ -70,4 +45,15 @@ func (s *Search) Home(c echo.Context) error {
 	}
 
 	return c.Render(http.StatusOK, "home", foundPlaylists)
+}
+
+func (s *Search) Stats(c echo.Context) error {
+	s.sc.WithIndex(search.TrackIndex)
+	res, err := s.sc.AggregateByTerm()
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(res)
+
+	return c.JSON(http.StatusOK, res)
 }

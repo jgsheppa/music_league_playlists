@@ -2,15 +2,22 @@ package playlists
 
 import (
 	"errors"
+
+	"github.com/jgsheppa/batbelt"
 )
 
 func Run() error {
-	if err := RemoveExistingFile("./assets/playlists.json"); err != nil {
-		return err
+	belt := batbelt.NewBatbelt()
+	belt = belt.RemoveFile("./assets/playlists.json")
+	if belt.Error() != nil {
+		return belt.Error()
 	}
 
-	if err := RemoveExistingFile("./assets/music-league.json"); err != nil {
-		return err
+	musicLeageFileName := "./assets/music-league.json"
+
+	belt = belt.RemoveFile(musicLeageFileName)
+	if belt.Error() != nil {
+		return belt.Error()
 	}
 
 	err := MergeLeagueData("assets", "music-league.json")
@@ -25,7 +32,7 @@ func Run() error {
 
 	playlistIDsFilePath := "./assets/playlist-ids.txt"
 
-	err = CreatePlaylistIDFile("./assets/music-league.json", playlistIDsFilePath)
+	err = CreatePlaylistIDFile(musicLeageFileName, playlistIDsFilePath)
 	if err != nil {
 		return errors.Join(errors.New("could not create playlist id file"), err)
 	}
@@ -35,9 +42,10 @@ func Run() error {
 		return errors.Join(errors.New("could not get playlists"), err)
 	}
 
-	err = playlistClient.CreatePlaylistJSON(playlists)
-	if err != nil {
-		return errors.Join(errors.New("could create merged playlist json file"), err)
+	belt.CreateJSONFile(playlists, "web/assets/playlists.json")
+	if belt.Error() != nil {
+		return errors.Join(errors.New("could create merged playlist json file"), belt.Error())
 	}
+
 	return nil
 }

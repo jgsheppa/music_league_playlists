@@ -92,7 +92,7 @@ func (es *ElasticSearch) IndexTracks() error {
 	}
 
 	if err := es.bulkIndexer.Close(context.Background()); err != nil {
-		log.Fatalf("Unexpected error: %s", err)
+		log.Printf("unexpected error: %s", err)
 	}
 
 	es.displayBulkIndexerStats(start)

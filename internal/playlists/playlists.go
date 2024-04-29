@@ -255,19 +255,6 @@ func (p *Playlist) GetPlaylists(filepath string) ([]SpotifyPlaylist, error) {
 	return res.playlists, nil
 }
 
-func (p *Playlist) CreatePlaylistJSON(playlists []SpotifyPlaylist) error {
-	jsonBytes, err := json.Marshal(playlists)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile("assets/playlists.json", jsonBytes, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 type Playlist struct {
 	spotify.SpotifyClient
 }

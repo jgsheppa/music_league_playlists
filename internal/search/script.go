@@ -25,7 +25,7 @@ func RunIndexPlaylists() error {
 }
 
 func RunIndexTracks(esClient *elasticsearch.Client) error {
-	if err := createTracksIndex(esClient, TrackIndex, "./assets/tracks.json"); err != nil {
+	if err := createTracksIndex(esClient, TrackIndex, "./web/assets/tracks.json"); err != nil {
 		log.Printf("could not create tracks index %e", err)
 		return err
 	}
