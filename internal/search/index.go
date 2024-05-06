@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"os"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/jgsheppa/batbelt"
 	"github.com/jgsheppa/music_league_playlists/internal/playlists"
 	"github.com/jgsheppa/music_league_playlists/internal/tracks"
 )
@@ -36,19 +36,16 @@ func (es *ElasticSearch) RemoveIndex(index string) error {
 
 func (es *ElasticSearch) IndexPlaylists() error {
 	var jsonData []playlists.SpotifyPlaylist
-	data, err := os.ReadFile(es.filepath)
-	if err != nil {
-		return err
-	}
 
-	if err := json.Unmarshal(data, &jsonData); err != nil {
+	playlists, err := batbelt.ReadJSONFile(jsonData, es.filepath)
+	if err != nil {
 		return err
 	}
 
 	var countSuccessful uint64
 	start := time.Now().UTC()
 
-	for _, playlist := range jsonData {
+	for _, playlist := range playlists {
 		data, err := json.Marshal(playlist)
 		if err != nil {
 			return err
@@ -67,22 +64,17 @@ func (es *ElasticSearch) IndexPlaylists() error {
 
 func (es *ElasticSearch) IndexTracks() error {
 	var jsonData tracks.Items
-	data, err := os.ReadFile(es.filepath)
+	tracks, err := batbelt.ReadJSONFile(jsonData, es.filepath)
 	if err != nil {
 		log.Printf("could not read file: %e", err)
-		return err
-	}
-
-	if err := json.Unmarshal(data, &jsonData); err != nil {
-		log.Printf("could not unmarshal json: %e", err)
 		return err
 	}
 
 	var countSuccessful uint64
 	start := time.Now().UTC()
 
-	for _, playlist := range jsonData {
-		data, err := json.Marshal(playlist)
+	for _, track := range tracks {
+		data, err := json.Marshal(track)
 		if err != nil {
 			log.Printf("could not marshal json: %e", err)
 

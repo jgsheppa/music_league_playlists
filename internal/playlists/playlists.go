@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jgsheppa/batbelt"
 	"github.com/jgsheppa/music_league_playlists/internal/spotify"
 )
 
@@ -192,16 +193,14 @@ func MergeLeagueData(directory, filename string) error {
 	var mergedList MusicLeaguePlaylists
 	for _, file := range files {
 		if strings.Contains(file.Name(), ".json") {
-			data, err := os.ReadFile(fmt.Sprintf("%s/%s", directory, file.Name()))
+
+			var list MusicLeaguePlaylists
+			playlists, err := batbelt.ReadJSONFile(list, fmt.Sprintf("%s/%s", directory, file.Name()))
 			if err != nil {
 				return err
 			}
-			var list MusicLeaguePlaylists
-			if err := json.Unmarshal(data, &list); err != nil {
-				return err
-			}
 
-			mergedList = append(mergedList, list...)
+			mergedList = append(mergedList, playlists...)
 		}
 	}
 

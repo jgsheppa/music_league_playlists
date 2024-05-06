@@ -19,6 +19,8 @@ github.com/jgsheppa/batbelt v0.0.0-20240427000638-3767090cf9a8 h1:kQ/nFREShXXrp6
 github.com/jgsheppa/batbelt v0.0.0-20240427000638-3767090cf9a8/go.mod h1:8B90QO6HTOUn0glTnnoRcYjix3IXxkugyeQd6eN8SIU=
 github.com/jgsheppa/batbelt v0.1.0 h1:8U4LiUO+VL0UVuXzUMigoc/QapbVnav77qJy8D/FagE=
 github.com/jgsheppa/batbelt v0.1.0/go.mod h1:8B90QO6HTOUn0glTnnoRcYjix3IXxkugyeQd6eN8SIU=
+github.com/jgsheppa/batbelt v0.2.0 h1:Und2Ty8Z0R2SYmr6FA8XTsLTB/X42NKgt5A0eaErRlw=
+github.com/jgsheppa/batbelt v0.2.0/go.mod h1:8B90QO6HTOUn0glTnnoRcYjix3IXxkugyeQd6eN8SIU=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/labstack/echo/v4 v4.12.0 h1:IKpw49IMryVB2p1a4dzwlhP1O2Tf2E0Ir/450lH+kI0=
